@@ -1,0 +1,17 @@
+﻿<Page
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TransportCanberra"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Maps="using:Windows.UI.Xaml.Controls.Maps"
+    x:Class="TransportCanberra.MainPage"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Maps:MapControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                         Name ="CanberraMap"
+                         MapServiceToken="rRSLSFOUXprPYKb00e1R~6pJlChvemhImMHqXRepUrQ~ArvZLGoNsFBs32eDD0dN_Wg_25wXwUW0Jvhu1Bp68LDkZXE8za1ES56yh6oQB33r
+"/>
+    </Grid>
+</Page>
