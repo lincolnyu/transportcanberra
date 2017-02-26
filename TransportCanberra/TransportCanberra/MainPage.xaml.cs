@@ -1,10 +1,17 @@
-﻿using System;
+﻿#define RANDOM_POF
+
+using System;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using TransportCanberra.GeoServices;
 using Windows.UI.Xaml.Controls.Maps;
-using Windows.Foundation;
 using Windows.Storage.Streams;
+using TransportCanberra.Models;
+using Windows.Devices.Geolocation;
+using TransportCanberra.GeoServices;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Collections.Generic;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -17,10 +24,16 @@ namespace TransportCanberra
     {
         private MapIcon _locationPin;
         private GeolocationService _geolocation;
+        private Dictionary<Bus, MapIcon> _busToIcon = new Dictionary<Bus, MapIcon>();
+
+        private BusSwarm _busSwarm = new BusSwarm();
+        private MapIcon pin;
 
         public MainPage()
         {
             InitializeComponent();
+
+            _busSwarm.BusesInView.CollectionChanged += BusesInViewOnCollectionChanged;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -35,7 +48,7 @@ namespace TransportCanberra
             }
         }
 
-        private async void GeolocationPositionUpdated(Windows.Devices.Geolocation.Geoposition position, GeolocationService.PositionUpdateReasons reason)
+        private async void GeolocationPositionUpdated(Geoposition position, GeolocationService.PositionUpdateReasons reason)
         {
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
                 async () =>
@@ -55,5 +68,63 @@ namespace TransportCanberra
                     }
                 });
         }
+
+        private void BusesInViewOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    foreach (var b in e.NewItems.Cast<Bus>())
+                    {
+                        b.PositionChanged += UpdateBus;
+                        UpdateBus(b);
+                    }
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    foreach (var b in e.OldItems.Cast<Bus>())
+                    {
+                        b.PositionChanged -= UpdateBus;
+                        _busToIcon.Remove(b);
+                    }
+                    break;
+            }
+        }
+
+        private void UpdateBus(Bus bus)
+        {
+            MapIcon busIcon;
+            if (!_busToIcon.TryGetValue(bus, out busIcon))
+            {
+                busIcon = new MapIcon();
+                busIcon.ZIndex = 09;
+                busIcon.Title = bus.Code;
+                // TODO image etc...
+                return;
+            }
+            _locationPin.Location = bus.Point;
+        }
+        
+        private async void BtnZoomToOriginOnClick(object sender, RoutedEventArgs e)
+        {
+            if (_locationPin != null)
+            {
+                if (CanberraMap.ZoomLevel < 15)
+                {
+                    await CanberraMap.TrySetViewAsync(_locationPin.Location, 15);
+                }
+                else
+                {
+                    await CanberraMap.TrySetViewAsync(_locationPin.Location);
+                }
+            }
+        }
+
+#if RANDOM_POF
+        private void GenerateRandomObjectsAroundMe(double radius)
+        {
+
+        }
+
+#endif
     }
 }
