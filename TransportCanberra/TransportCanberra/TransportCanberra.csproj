@@ -111,6 +111,7 @@
     <None Include="TransportCanberra_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\bus.png" />
     <Content Include="Assets\me.png" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />

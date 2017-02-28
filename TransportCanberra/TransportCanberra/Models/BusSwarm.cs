@@ -14,6 +14,8 @@ namespace TransportCanberra.Models
             Removed,
         }
 
+        private bool _restrictBusInView = false;
+
         public delegate void BusChangedEventHandler(Bus bus, ChangeTypes type);
 
         public BusSwarm()
@@ -25,6 +27,18 @@ namespace TransportCanberra.Models
 
         public ObservableCollection<Bus> BusesInView { get; } = new ObservableCollection<Bus>();
 
+        public bool RestrictBusesInView
+        {
+            get { return _restrictBusInView; }
+            set
+            {
+                if (_restrictBusInView != value)
+                {
+                    _restrictBusInView = value;
+                    ResetBusesInView();
+                }
+            }
+        }
         public double ViewMinLatitude { get; private set; }
         public double ViewMaxLatitude { get; private set; }
         public double ViewMinLongitude { get; private set; }
@@ -70,6 +84,7 @@ namespace TransportCanberra.Models
 
         private bool BusIsInViewRegion(Bus bus)
         {
+            if (!_restrictBusInView) return true;
             var lati = bus.Point.Position.Latitude;
             var longi = bus.Point.Position.Longitude;
             return lati >= ViewMinLatitude && lati <= ViewMaxLatitude && longi >= ViewMinLongitude && longi <= ViewMaxLongitude;

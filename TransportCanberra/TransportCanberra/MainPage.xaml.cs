@@ -27,7 +27,8 @@ namespace TransportCanberra
         private Dictionary<Bus, MapIcon> _busToIcon = new Dictionary<Bus, MapIcon>();
 
         private BusSwarm _busSwarm = new BusSwarm();
-        private MapIcon pin;
+
+        private RandomAccessStreamReference _busIconResource;
 
         public MainPage()
         {
@@ -35,6 +36,8 @@ namespace TransportCanberra
 
             _busSwarm.BusesInView.CollectionChanged += BusesInViewOnCollectionChanged;
         }
+
+        public Geopoint CurrentLocation => _locationPin?.Location;
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -45,6 +48,11 @@ namespace TransportCanberra
                 _geolocation = new GeolocationService();
                 _geolocation.PositionUpdated += GeolocationPositionUpdated;
                 _geolocation.Initialize();
+            }
+
+            if (_busIconResource == null)
+            {
+                _busIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/bus.png"));
             }
         }
 
@@ -84,9 +92,19 @@ namespace TransportCanberra
                     foreach (var b in e.OldItems.Cast<Bus>())
                     {
                         b.PositionChanged -= UpdateBus;
+                        RemoveBus(b);
                         _busToIcon.Remove(b);
                     }
                     break;
+            }
+        }
+
+        private void RemoveBus(Bus bus)
+        {
+            MapIcon busIcon;
+            if (_busToIcon.TryGetValue(bus, out busIcon))
+            {
+                CanberraMap.MapElements.Remove(busIcon);
             }
         }
 
@@ -96,33 +114,51 @@ namespace TransportCanberra
             if (!_busToIcon.TryGetValue(bus, out busIcon))
             {
                 busIcon = new MapIcon();
-                busIcon.ZIndex = 09;
+                busIcon.ZIndex = 1;
                 busIcon.Title = bus.Code;
+                busIcon.Image = _busIconResource;
                 // TODO image etc...
-                return;
+                CanberraMap.MapElements.Add(busIcon);
             }
-            _locationPin.Location = bus.Point;
+            busIcon.Location = bus.Point;
         }
         
         private async void BtnZoomToOriginOnClick(object sender, RoutedEventArgs e)
         {
-            if (_locationPin != null)
+            if (CurrentLocation != null)
             {
                 if (CanberraMap.ZoomLevel < 15)
                 {
-                    await CanberraMap.TrySetViewAsync(_locationPin.Location, 15);
+                    await CanberraMap.TrySetViewAsync(CurrentLocation, 15);
                 }
                 else
                 {
-                    await CanberraMap.TrySetViewAsync(_locationPin.Location);
+                    await CanberraMap.TrySetViewAsync(CurrentLocation);
                 }
             }
         }
 
 #if RANDOM_POF
-        private void GenerateRandomObjectsAroundMe(double radius)
+        private void GenerateRandomBusesAroundMe(int n, double radius)
         {
+            var rand = new Random();
+            for (var i = 0; i < n; i++)
+            {
+                var pos = CurrentLocation.Position;
+                var bus = new Bus
+                {
+                    Code = rand.Next(1, 1000).ToString()
+                };
+                var r = radius * rand.NextDouble();
+                var a = 2 * Math.PI * rand.NextDouble();
+                bus.MoveTo(pos.Latitude + r * Math.Cos(a), pos.Longitude + r * Math.Sin(a));
+                _busSwarm.AddBus(bus);
+            }
+        }
 
+        private void BtnTestOnClick(object sender, RoutedEventArgs e)
+        {
+            GenerateRandomBusesAroundMe(100, 0.02);
         }
 
 #endif

@@ -12,6 +12,8 @@
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
             <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition Height="30"></RowDefinition>
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -21,10 +23,11 @@
             </ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Maps:MapControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                         Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="2"
+                         Grid.Row="0" Grid.RowSpan="5" Grid.Column="0" Grid.ColumnSpan="2"
                          Name ="CanberraMap"
                          MapServiceToken="rRSLSFOUXprPYKb00e1R~6pJlChvemhImMHqXRepUrQ~ArvZLGoNsFBs32eDD0dN_Wg_25wXwUW0Jvhu1Bp68LDkZXE8za1ES56yh6oQB33r
 "/>
         <Button Grid.Row="1" Grid.Column="1" Click="BtnZoomToOriginOnClick">O</Button>
+        <Button Grid.Row="2" Grid.Column="1" Click="BtnTestOnClick">T</Button>
     </Grid>
 </Page>
