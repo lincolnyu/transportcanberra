@@ -12,6 +12,7 @@ using TransportCanberra.GeoServices;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -118,6 +119,7 @@ namespace TransportCanberra
                 busIcon.Title = bus.Code;
                 busIcon.Image = _busIconResource;
                 // TODO image etc...
+                _busToIcon.Add(bus, busIcon);
                 CanberraMap.MapElements.Add(busIcon);
             }
             busIcon.Location = bus.Point;
@@ -139,6 +141,9 @@ namespace TransportCanberra
         }
 
 #if RANDOM_POF
+
+        private Timer _simTimer;
+
         private void GenerateRandomBusesAroundMe(int n, double radius)
         {
             var rand = new Random();
@@ -156,9 +161,46 @@ namespace TransportCanberra
             }
         }
 
+        private void ClearAllBuses()
+        {
+            _busSwarm.ClearBuses();
+        }
+
         private void BtnTestOnClick(object sender, RoutedEventArgs e)
         {
-            GenerateRandomBusesAroundMe(100, 0.02);
+            if (_simTimer != null)
+            {
+                _simTimer.Dispose();
+                _simTimer = null;
+                ClearAllBuses();
+            }
+            else
+            {
+                GenerateRandomBusesAroundMe(100, 0.02);
+                const int Interval = 500;
+                _simTimer = new Timer(TestOnTimer, null, Interval, Interval);
+            }
+
+        }
+
+        private async void TestOnTimer(object state)
+        {
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+                () =>
+                {
+                    var rand = new Random();
+                    const double maxmove = 0.001;
+                    foreach (var b in _busSwarm.Buses)
+                    {
+                        var lati = b.Point.Position.Latitude;
+                        var longi = b.Point.Position.Longitude;
+                        var move = maxmove * rand.NextDouble();
+                        var a = 2 * Math.PI * rand.NextDouble();
+                        var newlati = lati + move * Math.Cos(a);
+                        var newlongi = longi + move * Math.Sin(a);
+                        _busSwarm.MoveBusTo(b, newlati, newlongi);
+                    }
+                });
         }
 
 #endif

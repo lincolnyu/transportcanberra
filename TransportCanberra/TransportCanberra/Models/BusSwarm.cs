@@ -58,8 +58,17 @@ namespace TransportCanberra.Models
 
         public void RemoveBus(Bus bus)
         {
-            Buses.Remove(bus);
             BusesInView.Remove(bus);
+            Buses.Remove(bus);
+        }
+
+        public void ClearBuses()
+        {
+            while (BusesInView.Count > 0)
+            {
+                BusesInView.RemoveAt(BusesInView.Count - 1);
+            }
+            Buses.Clear();
         }
 
         public void MoveBusTo(Bus bus, BasicGeoposition pos)
