@@ -100,7 +100,10 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Models\Bus.cs" />
-    <Compile Include="Models\BusSwarm.cs" />
+    <Compile Include="Models\BusStop.cs" />
+    <Compile Include="Models\BusStops.cs" />
+    <Compile Include="Models\ObjectGroup.cs" />
+    <Compile Include="Models\GeoObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility\GeoMath.cs" />
   </ItemGroup>
@@ -113,6 +116,7 @@
   <ItemGroup>
     <Content Include="Assets\bus.png" />
     <Content Include="Assets\me.png" />
+    <Content Include="Assets\stop.png" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -121,6 +125,16 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="TransitData\agency.txt" />
+    <Content Include="TransitData\calendar.txt" />
+    <Content Include="TransitData\calendar_dates.txt" />
+    <Content Include="TransitData\routes.txt" />
+    <Content Include="TransitData\shapes.txt" />
+    <Content Include="TransitData\stops.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TransitData\stop_times.txt" />
+    <Content Include="TransitData\trips.txt" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -132,6 +146,7 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

@@ -26,16 +26,22 @@ namespace TransportCanberra
         private MapIcon _locationPin;
         private GeolocationService _geolocation;
         private Dictionary<Bus, MapIcon> _busToIcon = new Dictionary<Bus, MapIcon>();
+        private Dictionary<BusStop, MapIcon> _busStopToIcon = new Dictionary<BusStop, MapIcon>();
 
-        private BusSwarm _busSwarm = new BusSwarm();
+        private ObjectGroup _busSwarm = new ObjectGroup(o=>o is Bus);
+        private BusStops _busStops = new BusStops();
 
         private RandomAccessStreamReference _busIconResource;
+        private RandomAccessStreamReference _busStopIconResource;
 
         public MainPage()
         {
             InitializeComponent();
 
-            _busSwarm.BusesInView.CollectionChanged += BusesInViewOnCollectionChanged;
+            _busSwarm.ObjectsInView.CollectionChanged += BusesInViewOnCollectionChanged;
+
+            _busStops.ObjectsInView.CollectionChanged += BusStopsInViewOnCollectionChanged;
+            _busStops.Load();
         }
 
         public Geopoint CurrentLocation => _locationPin?.Location;
@@ -54,6 +60,11 @@ namespace TransportCanberra
             if (_busIconResource == null)
             {
                 _busIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/bus.png"));
+            }
+
+            if (_busStopIconResource == null)
+            {
+                _busStopIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/stop.png"));
             }
         }
 
@@ -94,9 +105,56 @@ namespace TransportCanberra
                     {
                         b.PositionChanged -= UpdateBus;
                         RemoveBus(b);
-                        _busToIcon.Remove(b);
                     }
                     break;
+            }
+        }
+
+        private void BusStopsInViewOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    foreach (var b in e.NewItems.Cast<BusStop>())
+                    {
+                        b.PositionChanged += UpdateBusStop;
+                        UpdateBusStop(b);
+                    }
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    foreach (var b in e.OldItems.Cast<BusStop>())
+                    {
+                        b.PositionChanged -= UpdateBusStop;
+                        RemoveBusStop(b);
+                    }
+                    break;
+            }
+        }
+
+        private void UpdateBusStop(GeoObject obj)
+        {
+            MapIcon busStopIcon;
+            var busStop = (BusStop)obj;
+            if (!_busStopToIcon.TryGetValue(busStop, out busStopIcon))
+            {
+                busStopIcon = new MapIcon();
+                busStopIcon.ZIndex = 1;
+                busStopIcon.Title = busStop.Id;
+                busStopIcon.Image = _busStopIconResource;
+                // TODO image etc...
+                _busStopToIcon.Add(busStop, busStopIcon);
+                CanberraMap.MapElements.Add(busStopIcon);
+            }
+            busStopIcon.Location = busStop.Point;
+        }
+
+        private void RemoveBusStop(BusStop bs)
+        {
+            MapIcon busStopIcon;
+            if (_busStopToIcon.TryGetValue(bs, out busStopIcon))
+            {
+                CanberraMap.MapElements.Remove(busStopIcon);
+                _busStopToIcon.Remove(bs);
             }
         }
 
@@ -106,12 +164,14 @@ namespace TransportCanberra
             if (_busToIcon.TryGetValue(bus, out busIcon))
             {
                 CanberraMap.MapElements.Remove(busIcon);
+                _busToIcon.Remove(bus);
             }
         }
 
-        private void UpdateBus(Bus bus)
+        private void UpdateBus(GeoObject obj)
         {
             MapIcon busIcon;
+            var bus = (Bus)obj;
             if (!_busToIcon.TryGetValue(bus, out busIcon))
             {
                 busIcon = new MapIcon();
@@ -190,7 +250,7 @@ namespace TransportCanberra
                 {
                     var rand = new Random();
                     const double maxmove = 0.001;
-                    foreach (var b in _busSwarm.Buses)
+                    foreach (var b in _busSwarm.Objects)
                     {
                         var lati = b.Point.Position.Latitude;
                         var longi = b.Point.Position.Longitude;
@@ -198,7 +258,7 @@ namespace TransportCanberra
                         var a = 2 * Math.PI * rand.NextDouble();
                         var newlati = lati + move * Math.Cos(a);
                         var newlongi = longi + move * Math.Sin(a);
-                        _busSwarm.MoveBusTo(b, newlati, newlongi);
+                        _busSwarm.MoveObjectTo(b, newlati, newlongi);
                     }
                 });
         }

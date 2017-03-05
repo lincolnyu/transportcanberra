@@ -1,0 +1,3 @@
+service_id,date,exception_type
+2016-COMBNXT-Weekday-05,20170313,2
+2016-COMBNXT-Sunday-07,20170313,1
