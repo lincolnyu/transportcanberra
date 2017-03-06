@@ -36,6 +36,7 @@ namespace TransportCanberra.Models
                         var lat = double.Parse(split[4]);
                         var lon = double.Parse(split[5]);
                         stop.MoveTo(lat, lon);
+                        AddObject(stop);
                     }
                     lc++;
                 }

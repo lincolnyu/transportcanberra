@@ -13,6 +13,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using TransportCanberra.Utility;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -28,7 +29,7 @@ namespace TransportCanberra
         private Dictionary<Bus, MapIcon> _busToIcon = new Dictionary<Bus, MapIcon>();
         private Dictionary<BusStop, MapIcon> _busStopToIcon = new Dictionary<BusStop, MapIcon>();
 
-        private ObjectGroup _busSwarm = new ObjectGroup(o=>o is Bus);
+        private ObjectGroup _busSwarm = new ObjectGroup(o => o is Bus);
         private BusStops _busStops = new BusStops();
 
         private RandomAccessStreamReference _busIconResource;
@@ -38,13 +39,37 @@ namespace TransportCanberra
         {
             InitializeComponent();
 
+            LoadResources();
+
             _busSwarm.ObjectsInView.CollectionChanged += BusesInViewOnCollectionChanged;
 
             _busStops.ObjectsInView.CollectionChanged += BusStopsInViewOnCollectionChanged;
             _busStops.Load();
+
+            CanberraMap.ActualCameraChanged += MapCameraChanged;
+        }
+
+        private void MapCameraChanged(MapControl sender, MapActualCameraChangedEventArgs args)
+        {
+            var bounds = sender.GetBounds();
+            _busSwarm.SetViewRegion(bounds);
+            _busStops.SetViewRegion(bounds);
         }
 
         public Geopoint CurrentLocation => _locationPin?.Location;
+        
+        private void LoadResources()
+        {
+            if (_busIconResource == null)
+            {
+                _busIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/bus.png"));
+            }
+
+            if (_busStopIconResource == null)
+            {
+                _busStopIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/stop.png"));
+            }
+        }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -57,15 +82,6 @@ namespace TransportCanberra
                 _geolocation.Initialize();
             }
 
-            if (_busIconResource == null)
-            {
-                _busIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/bus.png"));
-            }
-
-            if (_busStopIconResource == null)
-            {
-                _busStopIconResource = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/stop.png"));
-            }
         }
 
         private async void GeolocationPositionUpdated(Geoposition position, GeolocationService.PositionUpdateReasons reason)
@@ -217,13 +233,13 @@ namespace TransportCanberra
                 var r = radius * rand.NextDouble();
                 var a = 2 * Math.PI * rand.NextDouble();
                 bus.MoveTo(pos.Latitude + r * Math.Cos(a), pos.Longitude + r * Math.Sin(a));
-                _busSwarm.AddBus(bus);
+                _busSwarm.AddObject(bus);
             }
         }
 
         private void ClearAllBuses()
         {
-            _busSwarm.ClearBuses();
+            _busSwarm.ClearObjects();
         }
 
         private void BtnTestOnClick(object sender, RoutedEventArgs e)

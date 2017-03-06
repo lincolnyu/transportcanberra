@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using TransportCanberra.Utility;
 using Windows.Devices.Geolocation;
 
 namespace TransportCanberra.Models
@@ -15,10 +16,6 @@ namespace TransportCanberra.Models
             Removed,
         }
 
-        private bool _restrictInView = false;
-
-        public delegate void ObjectChangedEventHandler(Bus bus, ChangeTypes type);
-
         public ObjectGroup(Predicate<GeoObject> filter)
         {
             ObjectFilter = filter;
@@ -31,24 +28,9 @@ namespace TransportCanberra.Models
 
         public ObservableCollection<GeoObject> ObjectsInView { get; } = new ObservableCollection<GeoObject>();
 
-        public bool RestrictBusesInView
-        {
-            get { return _restrictInView; }
-            set
-            {
-                if (_restrictInView != value)
-                {
-                    _restrictInView = value;
-                    ResetBusesInView();
-                }
-            }
-        }
-        public double ViewMinLatitude { get; private set; }
-        public double ViewMaxLatitude { get; private set; }
-        public double ViewMinLongitude { get; private set; }
-        public double ViewMaxLongitude { get; private set; }
+        public GeoboundingBox BoundingBox { get; private set; }
 
-        public void AddBus(GeoObject obj)
+        public void AddObject(GeoObject obj)
         {
             if (!Objects.Contains(obj))
             {
@@ -60,13 +42,13 @@ namespace TransportCanberra.Models
             }
         }
 
-        public void RemoveBus(Bus bus)
+        public void RemoveObject(GeoObject obj)
         {
-            ObjectsInView.Remove(bus);
-            Objects.Remove(bus);
+            ObjectsInView.Remove(obj);
+            Objects.Remove(obj);
         }
 
-        public void ClearBuses()
+        public void ClearObjects()
         {
             while (ObjectsInView.Count > 0)
             {
@@ -84,23 +66,20 @@ namespace TransportCanberra.Models
         {
             obj.MoveTo(latitude, longitude);
         }
-
-        public void SetViewRegion(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude)
+        
+        public void SetViewRegion(GeoboundingBox bounds)
         {
-            ViewMinLatitude = minLatitude;
-            ViewMaxLatitude = maxLatitude;
-            ViewMinLongitude = minLongitude;
-            ViewMaxLongitude = maxLongitude;
-
-            ResetBusesInView();
+            if (BoundingBox != bounds)
+            {
+                BoundingBox = bounds;
+                ResetObjectsInView();
+            }
         }
 
         private bool ObjectIsInViewRegion(GeoObject obj)
         {
-            if (!_restrictInView) return true;
-            var lati = obj.Point.Position.Latitude;
-            var longi = obj.Point.Position.Longitude;
-            return lati >= ViewMinLatitude && lati <= ViewMaxLatitude && longi >= ViewMinLongitude && longi <= ViewMaxLongitude;
+            if (BoundingBox == null) return true;
+            return BoundingBox.Contains(obj.Point.Position);
         }
 
         private void OnPositionChanged(GeoObject obj)
@@ -120,15 +99,15 @@ namespace TransportCanberra.Models
             }
         }
 
-        private void ResetBusesInView()
+        private void ResetObjectsInView()
         {
             while (ObjectsInView.Count > 0)
             {
                 ObjectsInView.RemoveAt(ObjectsInView.Count - 1);
             }
-            foreach (var bus in Objects.Where(ObjectIsInViewRegion))
+            foreach (var o in Objects.Where(ObjectIsInViewRegion))
             {
-                ObjectsInView.Add(bus);
+                ObjectsInView.Add(o);
             }
         }
     }
